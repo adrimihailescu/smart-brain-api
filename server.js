@@ -2,7 +2,23 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt-nodejs');
 const cors = require('cors');
-//import express from 'express';
+const knex = require('knex')
+
+
+const db = knex({
+    client: 'pg',
+    connection: {
+        host: '127.0.0.1',
+        /*  port: 3306, */
+        user: 'postgres',
+        password: '15109',
+        database: 'smart-brain'
+    }
+});
+
+/* db.select('*').from('users').then(data => {
+
+}); */
 
 const app = express();
 app.use(bodyParser.json());
@@ -51,7 +67,7 @@ app.post('/signin', (request, response) => {
     }); */
     if (request.body.email === database.users[0].email &&
         request.body.password === database.users[0].password) {
-        response.json('success')
+        response.json(database.users[0]);
     } else {
         response.status(400).json('error logging in');
     }
@@ -59,19 +75,18 @@ app.post('/signin', (request, response) => {
 
 app.post('/register', (request, response) => {
     const { email, name, password } = request.body;
-    console.log(email, name, password)
-    /*  bcrypt.hash(password, null, null, function (error, hash) {
-         console.log(hash); */
-    //});
-    database.users.push({
-        id: '125',
-        name: name,
-        email: email,
-        password: password,
-        entries: 0,
-        joined: new Date()
-    })
-    response.json(database.users[database.users.length - 1])
+    db('users')
+        .returning('*')
+        .insert({
+            email: email,
+            name: name,
+            joined: new Date()
+        })
+        .then(user => {
+            response.json(user[0]);
+        })
+        .catch(error => response.status(400).json('unable to register'))
+
 })
 
 app.get('/profile/:id', (request, response) => {
@@ -88,7 +103,7 @@ app.get('/profile/:id', (request, response) => {
     }
 })
 
-app.post('/image', (request, response) => {
+app.put('/image', (request, response) => {
     const { id } = request.body;
     let found = false;
     database.users.forEach(user => {
