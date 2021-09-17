@@ -8,12 +8,12 @@ const handleSignin = (request, response, db, bcrypt) => {
         .where('email', '=', email)
         .then(data => {
             const isValid = bcrypt.compareSync(password, data[0].hash);
-            console.log(isValid);
+            // console.log(isValid);
             if (isValid) {
                 return db.select('*').from('users')
                     .where('email', '=', email)
                     .then(user => {
-                        console.log(user);
+                        // console.log(user);
                         response.json(user[0])
                     })
                     .catch(error => response.status(400).json('unable to get user'))
